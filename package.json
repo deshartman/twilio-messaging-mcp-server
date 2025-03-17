@@ -1,0 +1,28 @@
+{
+    "name": "twilio-messaging-mcp-server",
+    "version": "1.0.0",
+    "description": "Twilio Messaging MCP Server",
+    "main": "build/index.js",
+    "type": "module",
+    "bin": {
+        "twilio-messaging-mcp-server": "./build/index.js"
+    },
+    "scripts": {
+        "build": "tsc && chmod +x build/index.js",
+        "start": "node build/index.js",
+        "dev": "ts-node index.ts",
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "dependencies": {
+        "@modelcontextprotocol/sdk": "^1.7.0",
+        "events": "^3.3.0",
+        "twilio": "^4.19.0",
+        "zod": "^3.24.2"
+    },
+    "devDependencies": {
+        "@types/node": "^20.10.5",
+        "@types/twilio": "^3.19.3",
+        "ts-node": "^10.9.2",
+        "typescript": "^5.3.3"
+    }
+}
