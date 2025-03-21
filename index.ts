@@ -6,6 +6,13 @@ import { TwilioMessagingService } from "./servers/TwilioMessagingServer.js";
 import { logOut, logError } from "./utils/logger.js";
 
 // Get configuration parameters from the command line arguments
+/****************************************************
+ * 
+ *                Twilio API Credentials
+ *  
+ ****************************************************/
+
+// NOTE: we are enforcing use of API Keys here instead of Auth Token, as it is a better posture for message level sends
 const accountSid = process.argv[2] || '';
 const apiKey = process.argv[3] || '';
 const apiSecret = process.argv[4] || '';
@@ -25,16 +32,6 @@ if (!accountSid.startsWith('AC')) {
     process.exit(1);
 }
 
-// Server configuration with clear naming for the messaging service
-const SERVER_CONFIG = {
-    name: "TwilioMessagingServer",
-    description: "MCP server for sending SMS messages via Twilio API",
-    version: "1.0.0"
-};
-
-// Initialize the MCP server
-const server = new McpServer(SERVER_CONFIG);
-
 // Create Twilio service with provided credentials
 const twilioService = new TwilioMessagingService(
     accountSid,
@@ -43,12 +40,28 @@ const twilioService = new TwilioMessagingService(
     number
 );
 
+
+/****************************************************
+ * 
+ *                      MCP server
+ *  
+ ****************************************************/
+
+// Server configuration with clear naming for the messaging service
+const SERVER_CONFIG = {
+    name: "TwilioMessagingServer",
+    description: "MCP server for sending SMS messages via Twilio API",
+    version: "1.0.0"
+};
+
+const server = new McpServer(SERVER_CONFIG);
+
 // Register the SMS sending tool
 server.tool(
     "send-sms",
     "Send an SMS message via Twilio",
     {
-        to: z.string().describe("Destination phone number in E.164 format (+1XXXXXXXXXX)"),
+        to: z.string().describe("Destination phone number in +E.164 format (+XXXXXXXXXX)"),
         message: z.string().describe("Message content to send")
     },
     async ({ to, message }) => {

@@ -7,6 +7,7 @@ An MCP (Model Context Protocol) server that enables sending SMS messages via the
 - Send SMS messages via Twilio
 - Integrates with MCP clients like Claude Desktop
 - Secure credential handling without environment variables
+- Uses Twilio API Keys for improved security
 
 ## Installation
 
@@ -27,10 +28,14 @@ twilio-messaging-mcp-server <accountSid> <apiKey> <apiSecret> <number>
 
 The server requires the following parameters:
 
-- `accountSid`: Your Twilio Account SID (must start with 'AC')
-- `apiKey`: Your Twilio API Key
+- `accountSid`: Your Twilio Account SID (must start with 'AC', will be validated)
+- `apiKey`: Your Twilio API Key (starts with 'SK')
 - `apiSecret`: Your Twilio API Secret
 - `number`: The Twilio phone number to send messages from (in E.164 format, e.g., +1234567890)
+
+### Security Note
+
+This server uses API Keys and Secrets instead of Auth Tokens for improved security. This approach provides better access control and the ability to revoke credentials if needed. For more information, see the [Twilio API Keys documentation](https://www.twilio.com/docs/usage/requests-to-twilio).
 
 ## Usage with Claude Desktop
 
@@ -44,7 +49,7 @@ For local development (when the package is not published to npm), add the follow
     "twilio-messaging": {
       "command": "node",
       "args": [
-        "/PATHTONODE/twilio-messaging-mcp-server/dist/index.js",
+        "/PATHTONODE/twilio-messaging-mcp-server/build/index.js",
         "your_account_sid_here1234567890abcdef",
         "your_api_key_here1234567890abcdef",
         "1234567890abcdef1234567890abcdef",
@@ -65,10 +70,10 @@ You can get the absolute path by running the following command in your project d
 
 ```bash
 # On macOS/Linux
-echo "$(pwd)/dist/index.js"
+echo "$(pwd)/build/index.js"
 
 # On Windows (PowerShell)
-Write-Output "$((Get-Location).Path)\dist\index.js"
+Write-Output "$((Get-Location).Path)\build\index.js"
 ```
 
 ### After Publishing to npm
@@ -83,7 +88,7 @@ Once the package is published to npm, you can use the following configuration:
       "args": [
         "-y", 
         "twilio-messaging-mcp-server",
-        "your_your_account_sid_here_here",
+        "your_account_sid_here",
         "your_api_key_here",
         "your_api_secret_here",
         "+1234567890"
@@ -100,10 +105,10 @@ Once the package is published to npm, you can use the following configuration:
 Sends an SMS message via Twilio.
 
 Parameters:
-- `to`: Destination phone number in E.164 format (+1XXXXXXXXXX)
+- `to`: Destination phone number in E.164 format (e.g., +1234567890)
 - `message`: Message content to send
 
-Example usage in an LLM (Local Language Model):
+Example usage in Claude:
 ```
 Can you send an SMS to +1234567890 saying "Hello from MCP!"
 ```
@@ -123,7 +128,7 @@ To start the server manually for testing (outside of Claude Desktop):
 
 ```bash
 # Run with actual credentials
-node dist/index.js "your_account_sid_here" "your_api_key_here" "your_api_secret" "+1234567890"
+node build/index.js "your_account_sid_here" "your_api_key_here" "your_api_secret" "+1234567890"
 
 # Or use the npm script (which uses ts-node for development)
 npm run dev -- "your_account_sid_here" "your_api_key_here" "your_api_secret" "+1234567890"
@@ -131,7 +136,7 @@ npm run dev -- "your_account_sid_here" "your_api_key_here" "your_api_secret" "+1
 
 The server will start and wait for MCP client connections. You should see output like:
 ```
-[17/03/2025 18:39:16] [TwilioMessagingServer] Server started successfully
+[TwilioMessagingServer] Server started successfully
 ```
 
 When using with Claude Desktop, the server is started automatically when Claude loads the configuration file. You don't need to manually start it.
