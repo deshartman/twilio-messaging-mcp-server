@@ -1,5 +1,5 @@
-import twilio from 'twilio';
-import { EventEmitter } from 'events';
+// import twilio from 'twilio';
+import { Twilio } from "twilio";
 import { logOut, logError } from '../utils/logger.js';
 
 /**
@@ -22,20 +22,19 @@ interface StatusCallback {
  * @property {string} number - Twilio phone number to use as the sender
  * @property {twilio.Twilio} twilioClient - Initialized Twilio client instance
  */
-class TwilioMessagingServer extends EventEmitter {
+class TwilioMessagingServer {
     accountSid: string;
     apiKey: string;
     apiSecret: string;
     number: string;
-    twilioClient: twilio.Twilio;
+    twilioClient: Twilio;
 
     constructor(accountSid: string, apiKey: string, apiSecret: string, number: string) {
-        super();
         this.accountSid = accountSid;
         this.apiKey = apiKey;
         this.apiSecret = apiSecret;
         this.number = number;
-        this.twilioClient = twilio(this.apiKey, this.apiSecret, { accountSid: this.accountSid });
+        this.twilioClient = new Twilio(this.apiKey, this.apiSecret, { accountSid: this.accountSid });
     }
 
     /**
@@ -62,4 +61,4 @@ class TwilioMessagingServer extends EventEmitter {
     }
 }
 
-export { TwilioMessagingServer as TwilioMessagingService };
+export { TwilioMessagingServer };
