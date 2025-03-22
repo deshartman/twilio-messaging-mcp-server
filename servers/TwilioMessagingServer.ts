@@ -1,6 +1,7 @@
 // import twilio from 'twilio';
 import { Twilio } from "twilio";
 import { logOut, logError } from '../utils/logger.js';
+import { MessageInstance } from "twilio/lib/rest/api/v2010/account/message.js";
 
 /**
  * Interface for status callback data
@@ -44,7 +45,7 @@ class TwilioMessagingServer {
      * @param {string} message - The message content to send
      * @returns {Promise<string|null>} The Twilio message SID if successful, null if sending fails
      */
-    async sendSMS(to: string, message: string): Promise<string | null> {
+    async sendSMS(to: string, message: string): Promise<MessageInstance | null> {
         try {
             logOut('TwilioMessagingService', `Sending SMS to: ${to} with message: ${message}`);
 
@@ -53,7 +54,7 @@ class TwilioMessagingServer {
                 from: this.number,
                 to: to
             });
-            return response.sid;
+            return response;
         } catch (error) {
             logError('TwilioMessagingService', `Error sending SMS: ${error}`);
             return null;

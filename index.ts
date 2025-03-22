@@ -2,7 +2,7 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
-import { TwilioMessagingService } from "./servers/TwilioMessagingServer.js";
+import { TwilioMessagingServer } from "./servers/TwilioMessagingServer.js";
 import { logOut, logError } from "./utils/logger.js";
 
 // Get configuration parameters from the command line arguments
@@ -33,7 +33,7 @@ if (!accountSid.startsWith('AC')) {
 }
 
 // Create Twilio service with provided credentials
-const twilioService = new TwilioMessagingService(
+const twilioMessagingServer = new TwilioMessagingServer(
     accountSid,
     apiKey,
     apiSecret,
@@ -54,10 +54,10 @@ const SERVER_CONFIG = {
     version: "1.0.0"
 };
 
-const server = new McpServer(SERVER_CONFIG);
+const mcpServer = new McpServer(SERVER_CONFIG);
 
 // Register the SMS sending tool
-server.tool(
+mcpServer.tool(
     "send-sms",
     "Send an SMS message via Twilio",
     {
@@ -66,7 +66,8 @@ server.tool(
     },
     async ({ to, message }) => {
         try {
-            const sid = await twilioService.sendSMS(to, message);
+            const response = await twilioMessagingServer.sendSMS(to, message);
+            const sid = response?.sid;
 
             if (sid) {
                 return {
@@ -103,7 +104,7 @@ server.tool(
 async function main() {
     try {
         const transport = new StdioServerTransport();
-        await server.connect(transport);
+        await mcpServer.connect(transport);
         logOut("TwilioMessagingServer", "Server started successfully");
     } catch (error) {
         logError("TwilioMessagingServer", `Error starting server: ${error}`);
@@ -114,7 +115,7 @@ async function main() {
 // Handle clean shutdown
 process.on("SIGINT", async () => {
     logOut("TwilioMessagingServer", "Shutting down...");
-    await server.close();
+    await mcpServer.close();
     process.exit(0);
 });
 
