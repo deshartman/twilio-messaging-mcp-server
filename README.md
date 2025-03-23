@@ -50,9 +50,9 @@ For local development (when the package is not published to npm), add the follow
       "command": "node",
       "args": [
         "/PATHTONODE/twilio-messaging-mcp-server/build/index.js",
-        "your_account_sid_here1234567890abcdef",
-        "your_api_key_here1234567890abcdef",
-        "1234567890abcdef1234567890abcdef",
+        "your_account_sid_here",
+        "your_api_key_here",
+        "your_api_secret_here",
         "+1234567890"
       ]
     }
