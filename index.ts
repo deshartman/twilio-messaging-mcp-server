@@ -1,9 +1,8 @@
 #!/usr/bin/env node
-import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { McpServer, ResourceTemplate } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
 import { TwilioMessagingServer } from "./servers/TwilioMessagingServer.js";
-import { logOut, logError } from "./utils/logger.js";
 
 // Get configuration parameters from the command line arguments
 /****************************************************
@@ -20,15 +19,13 @@ const number = process.argv[5] || '';
 
 // Validate required configuration
 if (!accountSid || !apiKey || !apiSecret || !number) {
-    logError("TwilioMessagingServer", "Missing required configuration parameters");
     console.error("Usage: twilio-messaging-mcp-server <accountSid> <apiKey> <apiSecret> <number>");
     process.exit(1);
 }
 
 // Validate Twilio Account SID format
 if (!accountSid.startsWith('AC')) {
-    logError("TwilioMessagingServer", "Invalid Account SID format. Twilio Account SID must start with 'AC'");
-    console.error("Error: Account SID must start with 'AC'");
+    console.error(`TwilioMessagingServer: Invalid Account SID format. Twilio Account SID must start with 'AC'`);
     process.exit(1);
 }
 
@@ -54,16 +51,22 @@ const SERVER_CONFIG = {
     version: "1.0.0"
 };
 
-const mcpServer = new McpServer(SERVER_CONFIG);
+const MCP_CAPABILITIES = { capabilities: { tools: {}, resources: {}, prompts: {} } }
+
+const mcpServer = new McpServer(SERVER_CONFIG, MCP_CAPABILITIES);
+
+// Define schemas for Twilio messaging
+const messageSchema = z.object({
+    to: z.string().describe("The Twilio To number in +E.164 format (+XXXXXXXXXX)"),
+    message: z.string().describe("The message to send")
+});
+
 
 // Register the SMS sending tool
 mcpServer.tool(
     "send-sms",
     "Send an SMS message via Twilio",
-    {
-        to: z.string().describe("Destination phone number in +E.164 format (+XXXXXXXXXX)"),
-        message: z.string().describe("Message content to send")
-    },
+    messageSchema.shape,
     async ({ to, message }) => {
         try {
             const response = await twilioMessagingServer.sendSMS(to, message);
@@ -87,7 +90,7 @@ mcpServer.tool(
             }
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : String(error);
-            logError("TwilioMessagingServer", `Error sending SMS: ${errorMessage}`);
+            console.error(`TwilioMessagingServer: Error sending SMS: ${errorMessage}`);
 
             return {
                 content: [{
@@ -100,27 +103,90 @@ mcpServer.tool(
     }
 );
 
+// Create a resource template for the status callback for the Messaging API to uri: Accounts/{AccountSid}/Messages.json
+// resource(name: string, template: ResourceTemplate, metadata: ResourceMetadata, readCallback: ReadResourceTemplateCallback): void;
+
+mcpServer.resource(
+    "twilio-status-callback",   // name
+    new ResourceTemplate("twilio://Accounts/{AccountSid}/Messages/{callSid}", { list: undefined }), // ResourceTemplate
+    { description: "Get the status of a Twilio message" },  /// ResourceMetadata
+    async (uri, variables, extra) => {      // ReadResourceTemplateCallback
+        const callSid = variables.callSid as string;
+        // Get the latest data from Twilio
+        const sessionStatusCallbackData = twilioMessagingServer.getStatusCallbackData(callSid);
+
+        if (!sessionStatusCallbackData) {
+            return {
+                contents: [
+                    {
+                        uri: uri.toString(),
+                        text: `No message for Call SID: ${callSid}`,
+                        mimeType: "text/plain"
+                    }
+                ]
+            };
+        }
+
+        const jsonContent = JSON.stringify(sessionStatusCallbackData, null, 2);
+
+        return {
+            contents: [
+                {
+                    uri: uri.toString(),
+                    text: jsonContent,
+                    mimeType: "text/plain"
+                }
+            ]
+        };
+    }
+);
+
+// create a new mcpServer.prompt  to tell the LLM how to use the tool and how to call the resource for status updates
+
+
+
+// Register prompts using the built-in prompt method
+mcpServer.prompt(
+    "SendSMS",
+    "Prompt for sending an SMS using Twilio Messaging MCP Server",
+    messageSchema.shape,
+    (args, extra) => {
+        const { to, message } = args;
+        return {
+            messages: [
+                {
+                    role: "assistant",
+                    content: {
+                        type: "text",
+                        text: `To send an SMS message to ${to}, use the 'send-sms' tool with the following parameters:\n\n- to: ${to}\n- message: ${message}`
+                    }
+                }
+            ]
+        };
+    }
+);
+
+
+
 // Start the server
 async function main() {
     try {
         const transport = new StdioServerTransport();
         await mcpServer.connect(transport);
-        logOut("TwilioMessagingServer", "Server started successfully");
     } catch (error) {
-        logError("TwilioMessagingServer", `Error starting server: ${error}`);
+        console.error(`TwilioMessagingServer: Error starting server: ${error}`);
         process.exit(1);
     }
 }
 
 // Handle clean shutdown
 process.on("SIGINT", async () => {
-    logOut("TwilioMessagingServer", "Shutting down...");
     await mcpServer.close();
     process.exit(0);
 });
 
 // Start the server
 main().catch(error => {
-    logError("TwilioMessagingServer", `Fatal error: ${error}`);
+    console.error(`TwilioMessagingServer: Fatal error: ${error}`);
     process.exit(1);
 });
