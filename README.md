@@ -5,6 +5,8 @@ An MCP (Model Context Protocol) server that enables sending SMS messages via the
 ## Features
 
 - Send SMS messages via Twilio
+- Check message status via resource templates
+- Includes helpful prompts for LLM guidance
 - Integrates with MCP clients like Claude Desktop
 - Secure credential handling without environment variables
 - Uses Twilio API Keys for improved security
@@ -113,6 +115,24 @@ Example usage in Claude:
 Can you send an SMS to +1234567890 saying "Hello from MCP!"
 ```
 
+## Available Resources
+
+### twilio-status-callback
+
+Get the status of a Twilio message.
+
+URI Template: `twilio://Accounts/{AccountSid}/Messages/{callSid}`
+
+## Available Prompts
+
+### SendSMS
+
+A prompt that guides the LLM on how to use the SMS sending tool.
+
+Parameters:
+- `to`: Destination phone number in E.164 format
+- `message`: Message content to send
+
 ## Development
 
 To build the project:
@@ -134,10 +154,7 @@ node build/index.js "your_account_sid_here" "your_api_key_here" "your_api_secret
 npm run dev -- "your_account_sid_here" "your_api_key_here" "your_api_secret" "+1234567890"
 ```
 
-The server will start and wait for MCP client connections. You should see output like:
-```
-[TwilioMessagingServer] Server started successfully
-```
+The server will start and wait for MCP client connections via standard input/output (stdio).
 
 When using with Claude Desktop, the server is started automatically when Claude loads the configuration file. You don't need to manually start it.
 
