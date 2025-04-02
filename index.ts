@@ -29,6 +29,19 @@ if (!accountSid.startsWith('AC')) {
     process.exit(1);
 }
 
+// Helper function to forward logs to the MCP server
+const logToMcp = (data: { level: string, message: string }) => {
+    // Only use valid log levels: info, error, debug
+    // If level is 'warn', treat it as 'info'
+    const mcpLevel = data.level === 'warn' ? 'info' : data.level as "info" | "error" | "debug";
+
+    // Send the log message to the MCP server's underlying Server instance
+    mcpServer.server.sendLoggingMessage({
+        level: mcpLevel,
+        data: data.message,
+    });
+};
+
 // Create Twilio service with provided credentials
 const twilioMessagingServer = new TwilioMessagingServer(
     accountSid,
@@ -37,6 +50,7 @@ const twilioMessagingServer = new TwilioMessagingServer(
     number
 );
 
+twilioMessagingServer.on('log', logToMcp);
 
 /****************************************************
  * 
@@ -51,16 +65,23 @@ const SERVER_CONFIG = {
     version: "1.0.0"
 };
 
-const MCP_CAPABILITIES = { capabilities: { tools: {}, resources: {}, prompts: {} } }
+const MCP_CAPABILITIES = {
+    capabilities: {
+        tools: {},
+        resources: {},
+        prompts: {},
+        logging: {}  // Add logging capability
+    }
+}
 
 const mcpServer = new McpServer(SERVER_CONFIG, MCP_CAPABILITIES);
+
 
 // Define schemas for Twilio messaging
 const messageSchema = z.object({
     to: z.string().describe("The Twilio To number in +E.164 format (+XXXXXXXXXX)"),
     message: z.string().describe("The message to send")
 });
-
 
 // Register the SMS sending tool
 mcpServer.tool(
@@ -70,6 +91,7 @@ mcpServer.tool(
     async ({ to, message }) => {
         try {
             const response = await twilioMessagingServer.sendSMS(to, message);
+
             const sid = response?.sid;
 
             if (sid) {
@@ -142,9 +164,6 @@ mcpServer.resource(
 );
 
 // create a new mcpServer.prompt  to tell the LLM how to use the tool and how to call the resource for status updates
-
-
-
 // Register prompts using the built-in prompt method
 mcpServer.prompt(
     "SendSMS",
@@ -165,8 +184,6 @@ mcpServer.prompt(
         };
     }
 );
-
-
 
 // Start the server
 async function main() {
