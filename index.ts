@@ -126,47 +126,10 @@ mcpServer.tool(
 );
 
 // Create a resource template for the status callback for the Messaging API to uri: Accounts/{AccountSid}/Messages.json
-// resource(name: string, template: ResourceTemplate, metadata: ResourceMetadata, readCallback: ReadResourceTemplateCallback): void;
-
 mcpServer.resource(
     "twilio-status-callback",   // name
-    new ResourceTemplate("twilio://Accounts/{AccountSid}/Messages/{callSid}", { list: undefined }), // ResourceTemplate
-    { description: "Get the status of a Twilio message" },  /// ResourceMetadata
-    async (uri, variables, extra) => {      // ReadResourceTemplateCallback
-        const callSid = variables.callSid as string;
-        // Get the latest data from Twilio
-        // const sessionStatusCallbackData = callbackData;
-
-        if (!callbackData) {
-            return {
-                contents: [
-                    {
-                        uri: uri.toString(),
-                        text: `No message for Call SID: ${callSid}`,
-                        mimeType: "text/plain"
-                    }
-                ]
-            };
-        }
-
-        // const jsonContent = JSON.stringify(callbackData, null, 2);
-
-        return {
-            contents: [
-                {
-                    uri: uri.toString(),
-                    text: callbackData,
-                    mimeType: "text/plain"
-                }
-            ]
-        };
-    }
-);
-
-mcpServer.resource(
-    "twilio-status-callback-raw",   // name
     "twilio://statuscallback", // Resource URI
-    { description: "Get the raw status callback data from Twilio" },  // ResourceMetadata
+    { description: "Get the last raw status callback data from Twilio" },  // ResourceMetadata
     async (uri) => {
         // Get the latest data from Twilio
         return {

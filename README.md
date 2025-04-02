@@ -6,6 +6,7 @@ An MCP (Model Context Protocol) server that enables sending SMS messages via the
 
 - Send SMS messages via Twilio
 - Check message status via resource templates
+- Status callback server using ngrok for receiving real-time message status updates
 - Includes helpful prompts for LLM guidance
 - Integrates with MCP clients like Claude Desktop
 - Secure credential handling without environment variables
@@ -16,14 +17,20 @@ An MCP (Model Context Protocol) server that enables sending SMS messages via the
 You can use this server directly via npx:
 
 ```bash
-npx twilio-messaging-mcp-server <accountSid> <apiKey> <apiSecret> <number>
+# With environment variables for callback functionality
+NGROK_AUTH_TOKEN="your_ngrok_auth_token" NGROK_CUSTOM_DOMAIN="your_custom_domain" npx twilio-messaging-mcp-server <accountSid> <apiKey> <apiSecret> <number>
+
+# Or using -e flag with npx
+npx -e NGROK_AUTH_TOKEN="your_ngrok_auth_token" -e NGROK_CUSTOM_DOMAIN="your_custom_domain" twilio-messaging-mcp-server <accountSid> <apiKey> <apiSecret> <number>
 ```
 
 Or install it globally:
 
 ```bash
 npm install -g twilio-messaging-mcp-server
-twilio-messaging-mcp-server <accountSid> <apiKey> <apiSecret> <number>
+
+# Run with environment variables
+NGROK_AUTH_TOKEN="your_ngrok_auth_token" NGROK_CUSTOM_DOMAIN="your_custom_domain" twilio-messaging-mcp-server <accountSid> <apiKey> <apiSecret> <number>
 ```
 
 ## Configuration
@@ -34,6 +41,21 @@ The server requires the following parameters:
 - `apiKey`: Your Twilio API Key (starts with 'SK')
 - `apiSecret`: Your Twilio API Secret
 - `number`: The Twilio phone number to send messages from (in E.164 format, e.g., +1234567890)
+
+### Environment Variables
+
+For status callback functionality, the following environment variables are required:
+
+- `NGROK_AUTH_TOKEN`: Your ngrok authentication token (required for the callback server)
+- `NGROK_CUSTOM_DOMAIN`: (Optional) Your custom ngrok domain if you have one
+
+They need to be passed in the NPX command with "-e" for example.
+
+### Callback Server
+
+This server uses ngrok to create a public URL that Twilio can use to send status callbacks. When you send an SMS message, Twilio will send status updates to this URL as the message status changes (e.g., from "queued" to "sent" to "delivered"). These status updates are captured by the callback server and made available through the `twilio-status-callback` resource.
+
+To use this functionality, you need to provide an ngrok authentication token via the `NGROK_AUTH_TOKEN` environment variable. You can optionally provide a custom domain via the `NGROK_CUSTOM_DOMAIN` environment variable if you have a paid ngrok account with custom domains.
 
 ### Security Note
 
@@ -56,7 +78,11 @@ For local development (when the package is not published to npm), add the follow
         "your_api_key_here",
         "your_api_secret_here",
         "+1234567890"
-      ]
+      ],
+      "env": {
+        "NGROK_AUTH_TOKEN": "your_ngrok_auth_token_here",
+        "NGROK_CUSTOM_DOMAIN": "your_custom_domain_here" // Optional
+      }
     }
   }
 }
@@ -94,7 +120,11 @@ Once the package is published to npm, you can use the following configuration:
         "your_api_key_here",
         "your_api_secret_here",
         "+1234567890"
-      ]
+      ],
+      "env": {
+        "NGROK_AUTH_TOKEN": "your_ngrok_auth_token_here",
+        "NGROK_CUSTOM_DOMAIN": "your_custom_domain_here" // Optional
+      }
     }
   }
 }
@@ -119,21 +149,52 @@ Can you send an SMS to +1234567890 saying "Hello from MCP!"
 
 ### twilio-status-callback
 
-Get the status of a Twilio message.
+Get the last raw status callback data from Twilio.
 
-URI Template: `twilio://Accounts/{AccountSid}/Messages/{callSid}`
+URI: `twilio://statuscallback`
+
+This resource provides access to the most recent status callback data received from Twilio after sending a message. The data is in raw JSON format and contains all the information Twilio sends in its status callbacks, including:
+
+- MessageSid: The unique identifier for the message
+- MessageStatus: The current status of the message (e.g., "queued", "sent", "delivered", "failed")
+- To: The recipient's phone number
+- From: Your Twilio phone number
+- ErrorCode: If applicable, the error code for failed messages
+- ErrorMessage: If applicable, the error message for failed messages
+
+Example usage in Claude:
+```
+Can you check the status of the SMS message I just sent?
+```
+
+Claude will access the `twilio://statuscallback` resource and display the latest status information.
 
 ## Available Prompts
 
 ### SendSMS
 
-A prompt that guides the LLM on how to use the SMS sending tool.
+A prompt that guides the LLM on how to use the SMS sending tool. This prompt helps Claude understand how to properly format and send SMS messages using the Twilio API.
 
 Parameters:
-- `to`: Destination phone number in E.164 format
+- `to`: Destination phone number in E.164 format (e.g., +1234567890)
 - `message`: Message content to send
 
+Example usage in Claude:
+```
+Can you help me send an SMS? I want to send "Meeting at 3pm tomorrow" to +1234567890.
+```
+
+Claude will use the SendSMS prompt to understand how to format the request and then use the send-sms tool to send the message.
+
 ## Development
+
+### Dependencies
+
+This project uses the following key dependencies:
+
+- **twilio**: The official Twilio SDK for Node.js
+- **@modelcontextprotocol/sdk**: The MCP SDK for building MCP servers
+- **@deshartman/mcp-status-callback**: A utility package for handling Twilio status callbacks via ngrok
 
 To build the project:
 
@@ -148,10 +209,10 @@ To start the server manually for testing (outside of Claude Desktop):
 
 ```bash
 # Run with actual credentials
-node build/index.js "your_account_sid_here" "your_api_key_here" "your_api_secret" "+1234567890"
+NGROK_AUTH_TOKEN="your_ngrok_auth_token" NGROK_CUSTOM_DOMAIN="your_custom_domain" node build/index.js "your_account_sid_here" "your_api_key_here" "your_api_secret" "+1234567890"
 
 # Or use the npm script (which uses ts-node for development)
-npm run dev -- "your_account_sid_here" "your_api_key_here" "your_api_secret" "+1234567890"
+NGROK_AUTH_TOKEN="your_ngrok_auth_token" NGROK_CUSTOM_DOMAIN="your_custom_domain" npm run dev -- "your_account_sid_here" "your_api_key_here" "your_api_secret" "+1234567890"
 ```
 
 The server will start and wait for MCP client connections via standard input/output (stdio).
