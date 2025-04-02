@@ -29,10 +29,13 @@ if (!accountSid.startsWith('AC')) {
     process.exit(1);
 }
 
-// Helper function to forward logs to the MCP server
-const logToMcp = (data: { level: string, message: string }) => {
-    // Only use valid log levels: info, error, debug
-    // If level is 'warn', treat it as 'info'
+// Create Twilio service with provided credentials
+const twilioMessagingServer = new TwilioMessagingServer(accountSid, apiKey, apiSecret, number);
+
+// Set up the callback handler to log messages and also set the callback Data
+twilioMessagingServer.on('log', (data: { level: string, message: string }) => {
+    // Forward logs to the MCP server
+    // Only use valid log levels: info, error, debug. If level is 'warn', treat it as 'info'
     const mcpLevel = data.level === 'warn' ? 'info' : data.level as "info" | "error" | "debug";
 
     // Send the log message to the MCP server's underlying Server instance
@@ -40,17 +43,14 @@ const logToMcp = (data: { level: string, message: string }) => {
         level: mcpLevel,
         data: data.message,
     });
-};
+});
 
-// Create Twilio service with provided credentials
-const twilioMessagingServer = new TwilioMessagingServer(
-    accountSid,
-    apiKey,
-    apiSecret,
-    number
-);
+let callbackData: any = null;
 
-twilioMessagingServer.on('log', logToMcp);
+// Set up the callback handler to log messages and also set the callback Data
+twilioMessagingServer.on('callback', (callbackMessage) => {
+    callbackData = JSON.stringify(callbackMessage, null, 2);
+});
 
 /****************************************************
  * 
@@ -135,9 +135,9 @@ mcpServer.resource(
     async (uri, variables, extra) => {      // ReadResourceTemplateCallback
         const callSid = variables.callSid as string;
         // Get the latest data from Twilio
-        const sessionStatusCallbackData = twilioMessagingServer.getStatusCallbackData(callSid);
+        // const sessionStatusCallbackData = callbackData;
 
-        if (!sessionStatusCallbackData) {
+        if (!callbackData) {
             return {
                 contents: [
                     {
@@ -149,19 +149,37 @@ mcpServer.resource(
             };
         }
 
-        const jsonContent = JSON.stringify(sessionStatusCallbackData, null, 2);
+        // const jsonContent = JSON.stringify(callbackData, null, 2);
 
         return {
             contents: [
                 {
                     uri: uri.toString(),
-                    text: jsonContent,
+                    text: callbackData,
                     mimeType: "text/plain"
                 }
             ]
         };
     }
 );
+
+mcpServer.resource(
+    "twilio-status-callback-raw",   // name
+    "twilio://statuscallback", // Resource URI
+    { description: "Get the raw status callback data from Twilio" },  // ResourceMetadata
+    async (uri) => {
+        // Get the latest data from Twilio
+        return {
+            contents: [
+                {
+                    uri: uri.toString(),
+                    text: callbackData,
+                    mimeType: "application/json"
+                }
+            ]
+        };
+    }
+)
 
 // create a new mcpServer.prompt  to tell the LLM how to use the tool and how to call the resource for status updates
 // Register prompts using the built-in prompt method

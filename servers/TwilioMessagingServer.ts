@@ -63,9 +63,9 @@ class TwilioMessagingServer extends EventEmitter {
 
             // Set up the callback event listener
             this.callbackHandler.on('callback', (data: CallbackEventData) => {
+                // { level: 'info', queryParameters: queryParameters, body: body }
                 // Emit the event to the calling function instead of logging
-                const callbackMessage = data;
-                this.emit('log', { level: 'info', message: callbackMessage });
+                this.emit('callback', data.body);
             });
 
             // Start the server immediately
@@ -141,7 +141,7 @@ class TwilioMessagingServer extends EventEmitter {
                 statusCallback: this.callbackUrl
             };
 
-            const response = await this.twilioClient.messages.create(messageOptions);
+            const response: any = await this.twilioClient.messages.create(messageOptions);
             this.emit('log', { level: 'info', message: response });
 
             return response;
@@ -151,16 +151,6 @@ class TwilioMessagingServer extends EventEmitter {
         }
     }
 
-    getStatusCallbackData(callSid: string): StatusCallback | null {
-        // This function should return the status callback data for the given call SID
-        // You can implement this function to retrieve the data from your database or any other source
-        // For now, we will just return a dummy object
-        return {    // TODO: Temp dummy data
-            CallSid: callSid,
-            Status: "completed",
-            Duration: 120
-        };
-    }
 }
 
 export { TwilioMessagingServer };
