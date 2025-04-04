@@ -1,0 +1,62 @@
+# Smithery configuration file: https://smithery.ai/docs/config#smitheryyaml
+
+startCommand:
+  type: stdio
+  configSchema:
+    # JSON Schema defining the configuration options for the MCP.
+    type: object
+    required:
+      - accountSid
+      - apiKey
+      - apiSecret
+      - phoneNumber
+      - ngrokAuthToken
+    properties:
+      accountSid:
+        type: string
+        default: ACXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+        description: Your Twilio account SID
+      apiKey:
+        type: string
+        default: your_api_key
+        description: Your Twilio API Key
+      apiSecret:
+        type: string
+        default: your_api_secret
+        description: Your Twilio API Secret
+      phoneNumber:
+        type: string
+        default: "+123456789"
+        description: Your Twilio phone number in E.164 format
+      ngrokAuthToken:
+        type: string
+        default: your_ngrok_auth_token
+        description: Your ngrok authentication token
+      ngrokDomain:
+        type: string
+        default: your-domain.ngrok.dev
+        description: Your ngrok custom domain (optional)
+  commandFunction:
+    # A JS function that produces the CLI command based on the given config to start the MCP on stdio.
+    |-
+    (config) => ({
+      command: 'node',
+      args: [
+        'build/index.js',
+        config.accountSid,
+        config.apiKey,
+        config.apiSecret,
+        config.phoneNumber
+      ],
+      env: {
+        NGROK_AUTH_TOKEN: config.ngrokAuthToken,
+        NGROK_CUSTOM_DOMAIN: config.ngrokDomain
+      }
+    })
+  exampleConfig:
+    accountSid: ACXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+    apiKey: your_api_key
+    apiSecret: your_api_secret
+    phoneNumber: "+123456789"
+    ngrokAuthToken: your_ngrok_auth_token
+    ngrokDomain: your-domain.ngrok.dev
