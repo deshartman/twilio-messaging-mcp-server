@@ -1,6 +1,6 @@
 {
     "name": "@deshartman/twilio-messaging-mcp-server",
-    "version": "0.1.7",
+    "version": "0.1.8",
     "description": "Twilio Messaging MCP Server example with Tools, Resources and Prompts. Includes callback handling",
     "main": "build/index.js",
     "type": "module",
@@ -47,7 +47,7 @@
         "node": ">=18.0.0"
     },
     "dependencies": {
-        "@deshartman/mcp-status-callback": "^0.4.0",
+        "@deshartman/mcp-status-callback": "^0.5.0",
         "@modelcontextprotocol/sdk": "^1.7.0",
         "events": "^3.3.0",
         "twilio": "^4.19.0",

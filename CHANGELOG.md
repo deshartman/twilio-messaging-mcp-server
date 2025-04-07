@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.8] - 2025-04-07
+
+### Added
+- Rebuilt library with Node.js 18+ for improved performance and compatibility
+- Added support for `npx` execution to simplify usage
+- Updated `run-server.sh` script to use environment variables from a `.env` file instead of command-line arguments
+- Improved error handling and validation in the server startup script
+- Enhanced security by avoiding credential exposure in command history
+
 ## [0.1.7] - 2025-04-07
 
 ### Added

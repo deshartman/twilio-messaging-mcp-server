@@ -55,21 +55,28 @@ This is possible because the package includes the "bin" field in package.json, m
 
 ### Running the Server
 
-You can run the server using the provided script:
+You can run the server using the provided script with a `.env` file:
 
 ```bash
-# Set your ngrok auth token
-export NGROK_AUTH_TOKEN=your_ngrok_auth_token
+# Create a .env file with your credentials
+# See .env.example for the required format
 
-# Run the server
-./run-server.sh <accountSid> <apiKey> <apiSecret> <number> [ngrokDomain]
+# Run the server (no arguments needed)
+./run-server.sh
 ```
 
-Example:
+The `.env` file should contain:
 
-```bash
-./run-server.sh YOUR_ACCOUNT_SID YOUR_API_KEY YOUR_API_SECRET YOUR_TWILIO_PHONE_NUMBER your-domain.ngrok.dev
 ```
+ACCOUNT_SID=YOUR_ACCOUNT_SID
+API_KEY=YOUR_API_KEY
+API_SECRET=YOUR_API_SECRET
+TWILIO_NUMBER=YOUR_TWILIO_PHONE_NUMBER
+NGROK_AUTH_TOKEN=YOUR_NGROK_AUTH_TOKEN
+NGROK_CUSTOM_DOMAIN=your-domain.ngrok.dev
+```
+
+This approach improves security by keeping credentials out of command history and simplifies the execution process.
 
 ### Directly with Node.js
 
