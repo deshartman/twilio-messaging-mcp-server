@@ -7,6 +7,7 @@ An MCP server for sending SMS messages via Twilio API. This server provides tool
 - Send SMS messages via Twilio
 - Get status callbacks from Twilio with enhanced handling via `@deshartman/mcp-status-callback`
 - Integrates with Claude AI via the Model Context Protocol (MCP)
+- Executable via npx for easy usage without installation
 
 ## Prerequisites
 
@@ -30,6 +31,20 @@ Or run directly with npx:
 ```bash
 npx @deshartman/twilio-messaging-mcp-server <accountSid> <apiKey> <apiSecret> <number>
 ```
+
+### NPX Usage
+
+The package can be executed directly using npx without installation:
+
+```bash
+# Run with required parameters
+npx @deshartman/twilio-messaging-mcp-server <accountSid> <apiKey> <apiSecret> <number>
+
+# With environment variables for ngrok
+env NGROK_AUTH_TOKEN=your_token NGROK_CUSTOM_DOMAIN=your_domain.ngrok.dev npx @deshartman/twilio-messaging-mcp-server <accountSid> <apiKey> <apiSecret> <number>
+```
+
+This is possible because the package includes the "bin" field in package.json, making it executable via npx.
 
 ## Environment Variables
 

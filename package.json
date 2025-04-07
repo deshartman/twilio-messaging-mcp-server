@@ -1,11 +1,13 @@
 {
     "name": "@deshartman/twilio-messaging-mcp-server",
-    "version": "0.1.6",
+    "version": "0.1.7",
     "description": "Twilio Messaging MCP Server example with Tools, Resources and Prompts. Includes callback handling",
     "main": "build/index.js",
     "type": "module",
     "types": "build/index.d.ts",
-    "bin": "./build/index.js",
+    "bin": {
+        "twilio-messaging-mcp-server": "./build/index.js"
+    },
     "files": [
         "build/**/*",
         "README.md",
