@@ -1,4 +1,5 @@
 # Twilio Messaging MCP Server
+[![smithery badge](https://smithery.ai/badge/@deshartman/twilio-messaging-mcp-server)](https://smithery.ai/server/@deshartman/twilio-messaging-mcp-server)
 
 An MCP server for sending SMS messages via Twilio API. This server provides tools, resources, and prompts for interacting with the Twilio Messaging API.
 
@@ -22,6 +23,15 @@ An MCP server for sending SMS messages via Twilio API. This server provides tool
 
 ## Installation
 
+### Installing via Smithery
+
+To install the Twilio Messaging MCP Server for Claude Desktop automatically via [Smithery](https://smithery.ai/server/@deshartman/twilio-messaging-mcp-server):
+
+```bash
+npx -y @smithery/cli install @deshartman/twilio-messaging-mcp-server --client claude
+```
+
+### Manual Installation
 ```bash
 npm install @deshartman/twilio-messaging-mcp-server
 ```
